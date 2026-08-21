@@ -6,8 +6,10 @@ The main point of this application is to track if the
 
 Checking edges:
 - [ ] If going left or right, robot will “fall off” if x, coordinate is < 0 or > than initial x coordinate
+    - [ ] If the robot fell, but the location already exist in hash, do not move robot(revert to previous location)
     - [ ] If robot falls off, save current location in a lookup(hash table)
 - [ ] If going up or down, robot will fall off if  y coordinate is <0 or y > initial y coordinate
+    - [ ] If robot falls off, save current location in a lookup(hash table)
 - [ ] Once robot falls off, ignore further instructions
 
 ASSUMPTIONS:
