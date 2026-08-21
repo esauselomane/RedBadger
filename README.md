@@ -22,7 +22,7 @@ I will make the assumption to use the latter.
 
 | Parameter | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `upperBounds` | `array` | *Yes* | This holds the upper-right coordinates of the rectangle. |
+| `upperBounds` | `string[]` | *Yes* | This holds the upper-right coordinates of the rectangle. |
 | `robots` | `string[][]` | *Yes* | The first element in the array contains the starting coordinates(separated by spaces) for the robot and the second contains the instructions to move it. |
 
 
