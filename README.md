@@ -12,8 +12,21 @@ Checking edges:
     - [ ] If robot falls off, save current location in a lookup(hash table)
 - [ ] Once robot falls off, ignore further instructions
 
-ASSUMPTIONS:
+#### ASSUMPTIONS
 The instruction ‘If a robot falls off the edge of the grid the word “LOST”
 should be printed after the position and orientation.’ Is not very clear. I cannot conclude that I should be tracking the location where the robot was before it fell off(it sound wrong because the robot may not move in the same orientation or direction in the next move as the one is fell off) or the coordinates it landed on when it got off bounds.
 
 I will make the assumption to use the latter.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `upperBounds` | `array` | *Yes* | This holds the upper-right coordinates of the rectangle. |
+| `robots` | `string[][]` | *Yes* | The first element in the array contains the starting coordinates(separated by spaces) for the robot and the second contains the instructions to move it. |
+
+
+#### Exceptions
+* `ArgumentNullException`: Thrown if either `upperBounds` or `upperBounds`  are null or whitespaces.
+* `ArgumentOutOfRangeException`: Thrown if `upperBounds[0]`  or `upperBounds[1]` is less than or equal to 0. The robot will not be able to move if the dimension of the rectangle is zero.
+* If a robot's starting position is out of bounds(that is, its coordinates falls out of the range of the initial coordinates, I will output "Starting position was out of bounds" after the position and orientation. This is not in the initial requirement
