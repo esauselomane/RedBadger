@@ -30,3 +30,8 @@ I will make the assumption to use the latter.
 * `ArgumentNullException`: Thrown if either `upperBounds` or `robots`  are null or whitespaces.
 * `ArgumentOutOfRangeException`: Thrown if `upperBounds[0]`  or `upperBounds[1]` is less than or equal to 0. The robot will not be able to move if the dimension of the rectangle is zero.
 * If a robot's starting position is out of bounds(that is, its coordinates falls out of the range of the initial coordinates, I will output "Starting position was out of bounds" after the position and orientation. This is not in the initial requirement
+
+  #### Running project
+  
+* from root of your application folder, run `dotnet test` on the terminal. You can add more test scenarios in RedBadgerRobotTest file
+* to run the console app, go to the RBRobotConsole folder on the terminal and run `dontnet run`: 
