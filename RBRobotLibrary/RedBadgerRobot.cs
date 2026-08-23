@@ -1,4 +1,6 @@
-﻿namespace RBRobotLibrary;
+﻿using System.Diagnostics;
+
+namespace RBRobotLibrary;
 
 public class RedBadgerRobot
 {
@@ -27,70 +29,176 @@ public class RedBadgerRobot
         _lowerBoundX = 0;
         _lowerBoundY = 0;
 
+        //format of robots array is expected to be a 2D array where each row represents a robot and the first element is "x y orientation", second element is instructions.
         foreach (var robot in robots)
         {
-            //the first element of the robot array is a string of coordinates and the orientation, we need to split it and parse it into a tuple of integers and a string for the orientation
-            var coordinatesAndOrientation = robot[0].Split(' ');
+            var coordStr = robot[0];
+            var span = coordStr.AsSpan();
 
-            //the second element of the robot array is a string of instructions, we will just store it as is for now   
-            _robotPositions.Add(new Robot((int.Parse(coordinatesAndOrientation[0]), int.Parse(coordinatesAndOrientation[1])), coordinatesAndOrientation[2], robot[1]));
+            int firstSpace = span.IndexOf(' ');
+            if (firstSpace < 0) throw new ArgumentException("Invalid robot coordinate format.");
+
+            int secondSpace = span.Slice(firstSpace + 1).IndexOf(' ');
+            if (secondSpace < 0) throw new ArgumentException("Invalid robot coordinate format.");
+            secondSpace += firstSpace + 1;
+
+            var xSpan = span.Slice(0, firstSpace);
+            var ySpan = span.Slice(firstSpace + 1, secondSpace - firstSpace - 1);
+            var dirSpan = span.Slice(secondSpace + 1);
+
+            if (!int.TryParse(xSpan, out int x) || !int.TryParse(ySpan, out int y))
+                throw new ArgumentException("Invalid robot coordinates; must be integers.");
+
+            string initialDir = dirSpan.ToString();
+            string instructions = robot[1];
+
+            _robotPositions.Add(new Robot((x, y), initialDir, instructions));
         }
     }
-    public void Move()
+    public List<string> MoveRobots()
     {
-        foreach (var robot in _robotPositions)
-        {
-            // Logic to move the robot based on its instructions
-            
-            foreach (char instruction in robot.Instructions)
-            {
-                int newX = robot.Coordinates.x;
-                int newY = robot.Coordinates.y;
+        var results = new List<string>();
+        var isLost = false;
 
-                switch (instruction)
+        for (int i = 0; i < _robotPositions.Count; i++)
+        {
+            var robot = _robotPositions[i];
+            
+            for (int j = 0; j < robot.Instructions.Length; j++)
+            {
+                if (isLost)
+                {
+                    break;
+                }
+
+                switch (robot.Instructions[j])
                 {
                     case 'R':
-                        newY++;
+                        robot.InitialDirection = SwitchOrientation(robot, 90);
                         break;
                     case 'L':
-                        newY--;
+                        robot.InitialDirection = SwitchOrientation(robot, -90);
                         break;
                     case 'F':
-                        newX++;
-                        break;
+                        var newCoordinates = Move(robot);
+                        if(IsPositionDangerous(newCoordinates.x, newCoordinates.y))
+                        {
+                            //there is a scent of a lost robot, so we will ignore this instruction and continue to the next one.
+                            continue;
+                        }
+
+                        if(AddDangerousPosition(newCoordinates.x, newCoordinates.y))
+                        {
+                            results.Add($"{robot.Coordinates.x} {robot.Coordinates.y} {robot.InitialDirection} LOST");
+                            isLost = true;
+                        }
+                        else
+                        {
+                            robot.Coordinates = newCoordinates;
+                        }
+                    break;
                     //add more cases for other instructions as needed
                     default:
-                        throw new InvalidOperationException($"Invalid instruction '{instruction}' for robot at ({robot.Coordinates.x}, {robot.Coordinates.y}).");
+                        throw new InvalidOperationException($"Invalid instruction '{robot.Instructions[j]}' for robot at ({robot.Coordinates.x}, {robot.Coordinates.y}).");
                 }
-
-                AddDangerousPosition(newX, newY);
-
-                if (IsPositionDangerous(newX, newY))
-                {
-                    // If the current position is dangerous, we should not move the robot but instead add the new position to the dangerous positions list and continue to the next instruction.
-                    //TODO: add robot state to indicate it has been lost and save its return details
-                    continue;
-                }
+                
             }
+
+            if (isLost)
+            {
+                isLost = false;
+                continue;
+            }
+
+            // If the robot is not lost, add its final position and orientation to the results
+            results.Add($"{robot.Coordinates.x} {robot.Coordinates.y} {robot.InitialDirection}");
         }
+        return results;
     }
 
-    public void SwitchOrientation(Robot robot, int newOrientation)
+    public (int x, int y) Move(Robot robot)
     {
-        //TODO: Will pass -90 for left and +90 for right, and will add to the current orientation to get the new orientation. Will need to handle wrapping around from 0 to 360 degrees.
-        //TODO: add check to ensure newOrientation is a valid orientation (0, 90, 180, 270)
-        //PS: Use Math.Abs to ensure the new orientation is always positive and within the range of 0-360 degrees.
-        //if new orientation is greater than 360, subtract 360 from it until it is less than or equal to 360. If new orientation is less than 0, add 360 to it until it is greater than or equal to 0.
-        //
-        robot.InitialDirection = robot.InitialDirection + newOrientation.ToString();
+        var newCoordinates = robot.Coordinates;
+
+        switch (robot.InitialDirection)
+        {
+            case "N":
+                newCoordinates= (robot.Coordinates.x, robot.Coordinates.y + 1);
+                break;
+            case "E":
+                newCoordinates = (robot.Coordinates.x + 1, robot.Coordinates.y);
+                break;
+            case "S":
+                newCoordinates = (robot.Coordinates.x, robot.Coordinates.y - 1);
+                break;
+            case "W":
+                newCoordinates = (robot.Coordinates.x - 1, robot.Coordinates.y);
+                break;
+            default:
+                throw new ArgumentException("Invalid orientation value. Must be N, E, S, or W.");
+        }
+
+        return newCoordinates;
     }
 
-    public void AddDangerousPosition(int x, int y)
+    public string SwitchOrientation(Robot robot, int newOrientation = 0)
+    {
+        var currentOrientation = 0;
+
+        switch (robot.InitialDirection)
+        {
+            case "N":
+                currentOrientation = 360;
+                break;
+            case "E":
+                currentOrientation = 90;
+                break;
+            case "S":
+                currentOrientation = 180;
+                break;
+            case "W":
+                currentOrientation = 270;
+                break;
+            default:
+                throw new ArgumentException("Invalid orientation value. Must be between 0 and 3.");
+        }
+
+        //Ensure the value is alway positive
+        var newDirection = Math.Abs(currentOrientation + newOrientation);
+
+        return GetRobotOrientation(currentOrientation + newOrientation);
+    }
+
+    public string GetRobotOrientation(int orientation)
+    {
+        //edge case. when orientation is greater than 360, we will reset it to 90 (East) as the next orientation.
+        if (orientation > 360)
+        {
+            return "E";
+        }
+
+        switch (orientation)
+        {
+            case 360: case 0:
+                return "N";
+            case 90:      
+                return "E";
+            case 180:
+                return "S";
+            case 270:
+                return "W";
+            default:
+                throw new ArgumentException("Invalid orientation value. Must be between 0 and 3.");
+        }   
+    }
+
+    public bool AddDangerousPosition(int x, int y)
     {
         if (x < _lowerBoundX || x > _upperBoundX || y < _lowerBoundY || y > _upperBoundY)
         {
-            _dangerousPositions.Add((x, y));
+            return _dangerousPositions.Add((x, y));
         }
+        return false;
     }
 
     public bool IsPositionDangerous(int x, int y)
