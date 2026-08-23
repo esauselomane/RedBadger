@@ -21,6 +21,10 @@ public class RedBadgerRobot
         {
             throw new ArgumentException("Robots array cannot be null or empty.");
         }
+        if(upperBounds[0] < 0 || upperBounds[0] > 50 || upperBounds[1] < 0 || upperBounds[1] > 50)
+        {
+            throw new ArgumentException("Upper bounds must be between 0 and 50.");
+        }
 
         //for brevity, I will not implement checking the robots array for further validation and will assume it is valid.
 
@@ -32,27 +36,10 @@ public class RedBadgerRobot
         //format of robots array is expected to be a 2D array where each row represents a robot and the first element is "x y orientation", second element is instructions.
         foreach (var robot in robots)
         {
-            var coordStr = robot[0];
-            var span = coordStr.AsSpan();
-
-            int firstSpace = span.IndexOf(' ');
-            if (firstSpace < 0) throw new ArgumentException("Invalid robot coordinate format.");
-
-            int secondSpace = span.Slice(firstSpace + 1).IndexOf(' ');
-            if (secondSpace < 0) throw new ArgumentException("Invalid robot coordinate format.");
-            secondSpace += firstSpace + 1;
-
-            var xSpan = span.Slice(0, firstSpace);
-            var ySpan = span.Slice(firstSpace + 1, secondSpace - firstSpace - 1);
-            var dirSpan = span.Slice(secondSpace + 1);
-
-            if (!int.TryParse(xSpan, out int x) || !int.TryParse(ySpan, out int y))
-                throw new ArgumentException("Invalid robot coordinates; must be integers.");
-
-            string initialDir = dirSpan.ToString();
-            string instructions = robot[1];
-
-            _robotPositions.Add(new Robot((x, y), initialDir, instructions));
+            var coordinatesAndOrientation = robot[0].Split(' ');
+        
+            _robotPositions.Add(new Robot((int.Parse(coordinatesAndOrientation[0]), int.Parse(coordinatesAndOrientation[1])), 
+            coordinatesAndOrientation[2], robot[1]));
         }
     }
     public List<string> MoveRobots()
@@ -63,9 +50,17 @@ public class RedBadgerRobot
         for (int i = 0; i < _robotPositions.Count; i++)
         {
             var robot = _robotPositions[i];
-            
+
+            // Check if the robot's starting position is out of bounds and mark its position as dangerous if so
+            if (AddDangerousPosition(robot.Coordinates.x, robot.Coordinates.y))
+            {
+                results.Add($"{robot.Coordinates.x} {robot.Coordinates.y} {robot.InitialDirection} Starting position was out of bounds");
+                continue;
+            }
+
             for (int j = 0; j < robot.Instructions.Length; j++)
             {
+                // If the robot is lost, we stop processing its instructions
                 if (isLost)
                 {
                     break;

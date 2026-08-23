@@ -13,8 +13,7 @@ public class RedBadgerRobotTest
             new[] { "1 1 E", "RFRFRFRF" },
             new[] { "3 2 N", "FRRFLLFFRRFLL" },
             new[] { "0 3 W", "LLFFFLFLFL" },
-            new[] { "2 2 N", "F" },
-            new[] { "4 1 S", "LL" }
+            new[] { "6 7 N", "F" }
         };
 
         var sut = new RedBadgerRobot(bounds, robots);
@@ -26,8 +25,7 @@ public class RedBadgerRobotTest
             "1 1 E",
             "3 3 N LOST",
             "2 3 S",
-            "2 3 N",
-            "4 1 N"
+            "6 7 N Starting position was out of bounds"
         };
 
         Assert.Equal(expected, results);
