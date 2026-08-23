@@ -34,4 +34,4 @@ I will make the assumption to use the latter.
   #### Running project
   
 * from root of your application folder, run `dotnet test` on the terminal. You can add more test scenarios in RedBadgerRobotTest file
-* to run the console app, go to the RBRobotConsole folder on the terminal and run `dontnet run`: 
+* to run the console app, go to the RBRobotConsole folder on the terminal and run `dotnet run`
