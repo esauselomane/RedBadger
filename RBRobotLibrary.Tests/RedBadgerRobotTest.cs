@@ -12,6 +12,7 @@ public class RedBadgerRobotTest
         {
             new[] { "1 1 E", "RFRFRFRF" },
             new[] { "3 2 N", "FRRFLLFFRRFLL" },
+            new[] { "3 2 N", "FRRFLLFFRRFLL" },//when passing the same robot twice at the same position, it should not be lost the second time, as the scent is left behind
             new[] { "0 3 W", "LLFFFLFLFL" },
             new[] { "6 7 N", "F" }
         };
@@ -24,6 +25,7 @@ public class RedBadgerRobotTest
         {
             "1 1 E",
             "3 3 N LOST",
+            "3 2 N", 
             "2 3 S",
             "6 7 N Starting position was out of bounds"
         };
